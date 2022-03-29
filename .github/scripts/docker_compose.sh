@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-
 COMMIT_MESSAGE=$1
-
+exit 0
 export BRANCH_NAME=$(echo ${GITHUB_REF##*/})
 export GIT_DIFF=$(git diff origin/master --name-only .)
 
@@ -17,9 +16,7 @@ then
 fi
 
 echo "mieszko"
-echo $GIT_DIFF
 echo $deploy
-deploy=true
 
 
 if $deploy; then
@@ -86,4 +83,8 @@ until [[ "200" -eq "$response" ]] || [[ "$COUNTER" -eq "$TIMEOUT" ]]; do
 done
 cd ../test/postman/docker-compose
 docker run -a STDOUT --volume $PWD:/etc/newman --network host postman/newman_alpine33:3.9.2 run "acs-test-docker-compose-collection.json" --global-var "protocol=http" --global-var "url=localhost:8080"
+
+#Show logs
+cd ../../../docker-compose
+docker-compose logs --no-color
 fi

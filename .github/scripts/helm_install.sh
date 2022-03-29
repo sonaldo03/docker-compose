@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 COMMIT_MESSAGE=$1
 export GIT_DIFF=$(git diff origin/master --name-only .)
 export BRANCH_NAME=$(echo ${GITHUB_REF##*/})
@@ -117,9 +116,7 @@ then
     deploy=true
 fi
 
-echo 'mieszko'
 echo $deploy
-deploy=true
 
 
 if $deploy; then
@@ -129,8 +126,7 @@ if $deploy; then
   kubectl create secret generic quay-registry-secret --from-file=.dockerconfigjson=$HOME/.docker/config.json --type=kubernetes.io/dockerconfigjson -n $namespace
 
   # install ingress
-  #AWS_SG is empty???
-  helm upgrade --install $release_name_ingress --repo https://kubernetes.github.io/ingress-nginx ingress-nginx --version=3.7.1 \
+  helm upgrade --install $release_name_ingress --repo https://kubernetes.github.io/ingress-nginx ingress-nginx --version=4.0.18 \
   --set controller.scope.enabled=true \
   --set controller.scope.namespace=$namespace \
   --set rbac.create=true \
@@ -144,6 +140,7 @@ if $deploy; then
   --set controller.service.annotations."service\.beta\.kubernetes\.io/aws-load-balancer-security-groups"="${AWS_SG}" \
   --set controller.publishService.enabled=true \
   --set controller.admissionWebhooks.enabled=false \
+  --set controller.ingressClassResource.enabled=false \
   --wait \
   --namespace $namespace
 
@@ -151,7 +148,7 @@ if $deploy; then
   helm dep up helm/alfresco-content-services
   helm upgrade --install $release_name_acs helm/alfresco-content-services \
       --values=$values_file \
-      --set global.tracking.sharedsecret=$(openssl rand 24 -hex) \
+      --set global.tracking.sharedsecret=$(openssl rand -hex 24) \
       --set externalPort="443" \
       --set externalProtocol="https" \
       --set externalHost="$namespace.${HOSTED_ZONE}" \
@@ -231,9 +228,9 @@ if $deploy; then
   fi
 
   if [[ "$TRAVIS_COMMIT_MESSAGE" != *"[keep env]"* ]]; then
-      echo "tmp"
       helm delete $release_name_ingress $release_name_acs -n $namespace
       kubectl delete namespace $namespace
+      echo "test"
   fi
 
   if [[ "${TEST_RESULT}" == "1" ]]; then
